@@ -51,7 +51,7 @@ const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim
 const T=s=>(s==null?'':String(s)).replace(/\s+/g,' ').trim(),TC=s=>T(s).replace(/[A-Za-z]+/g,w=>w[0].toUpperCase()+w.slice(1).toLowerCase());
 const dn=v=>{if(v===''||v==null)return 0;if(v instanceof Date)return Math.round((+v-v.getTimezoneOffset()*6e4)/D);if(typeof v==='number')return Math.round(v-25569);const t=Date.parse(v);return isNaN(t)?0:Math.round(t/D)};
 const B5=[['0-3 m',0,3],['3-12 m',3,12],['1-3 yrs',12,36],['3-5 yrs',36,60],['5+ yrs',60,1e9]],E3=[['0-3 m',0,3],['3-6 m',3,6],['6-12 m',6,12]];
-const SK='attr_dash_data_v1';let SRC=null;
+const SK='attr_dash_data_v1';let SRC=null,API=false,APIM='';
 const stSave=o=>{try{localStorage.setItem(SK,JSON.stringify(o));return true}catch(e){return false}},stLoad=()=>{try{const s=JSON.parse(localStorage.getItem(SK)||'null');return s&&s.v==1&&s.rows&&s.rows.length?s:null}catch(e){return null}};
 let ALL=[],ASOF=0,TAB=0,EXP={},CH={},R,P,sp,TT,ST,LT=[],PC,TX,DR=[],DCUR=[];
 const xb=f=>`<button class="mr xb" onclick="${f}">&#11015; Excel</button>`,dk=(t,fn)=>DR.push({t,fn})-1,lk=(n,t,fn,ok=n)=>ok?`<a class="lk" onclick="dr(${dk(t,fn)})">${n}</a>`:n,HV=(e,a)=>e.native.target.style.cursor=a.length?'pointer':'default',E=p=>Math.min(p.e,ASOF),sOp=(r,p)=>r.j<p.s&&(!r.l||r.l>=p.s),sCl=(r,p)=>r.j<=E(p)&&(!r.l||r.l>E(p)),
@@ -169,7 +169,7 @@ function render(){DR=[];R=ALL.filter(r=>(!$('#fD').value||r.d==$('#fD').value)&&
  $('#body').innerHTML=[ov,fst,org,fg,rs,tn][TAB]();LT.forEach(f=>f())}
 function periodOpts(){const c=CU();$('#per').hidden=c;$('#mf').hidden=$('#mt').hidden=!c;if(c){if(!$('#mf').options.length){const o=per(1).map((p,i)=>`<option value="${i}">${p.lb}`).join('');$('#mf').innerHTML=o;$('#mt').innerHTML=o;$('#mf').value=0;$('#mt').value=per(1).length-1}return}const P2=per(VS[$('#view').value]);$('#per').innerHTML=P2.map((p,i)=>`<option value="${i}">${p.lb}${p.part?' (to date)':''}`).join('');$('#per').value=P2.length-1}
 function init(){const fill=(id,k,all)=>{$(id).innerHTML=`<option value="">${all}`+[...new Set(ALL.map(r=>r[k]))].sort().map(v=>`<option value="${esc(v)}">${esc(v)}`).join('')};
- $('#src').textContent=SRC?(SRC.server?'Shared data file: '+SRC.name+' \u00b7 uploaded '+new Date(SRC.at).toLocaleString('en-GB',{hour12:false}):'Using file (this browser only): '+SRC.name):'';$('#rst').hidden=!(SRC&&!SRC.server);fill('#fD','d','All departments');fill('#fZ','z','All zones');fill('#fG','a','All grades');periodOpts();
+ $('#src').textContent=SRC?(SRC.server?'Shared with everyone \u00b7 data file: '+SRC.name+' \u00b7 uploaded '+new Date(SRC.at).toLocaleString('en-GB',{hour12:false}):'Using file (this browser only): '+SRC.name):APIM;$('#rst').hidden=!(SRC&&!SRC.server);fill('#fD','d','All departments');fill('#fZ','z','All zones');fill('#fG','a','All grades');periodOpts();
  const ex=ALL.filter(r=>r.l).length;$('#meta').textContent=`Last modified: ${fd(ASOF)} · Active Employee Count: ${ALL.length-ex}`;render()}
 $('#tb').innerHTML=['📊 Overview','🧩 Function / Sub-Function','🏢 BU','🎖️ Grade & Zone','🚪 Exit Reasons','⏳ Tenure & Recruiter'].map((t,i)=>`<button>${t}</button>`).join('');
 document.querySelectorAll('#tb button').forEach((b,i)=>b.onclick=()=>{TAB=i;render()});
@@ -222,18 +222,23 @@ $('#file').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)
   const na=Math.floor(((f.lastModified||Date.now())-new Date().getTimezoneOffset()*6e4)/D);ASOF=na;const rows=build(tabs);ASOF=oldA;
   if(!rows.length)return alert('No employee rows were found in that file.');
   let pw='';try{pw=sessionStorage.getItem('attr_pw')||''}catch(x){}
-  if(!pw)pw=prompt('Admin password to publish this file for everyone who opens this link.\nLeave blank to use it only in this browser.')||'';
+  if(!pw)pw=prompt(API?'Admin password (required to publish this file for everyone who opens this link):':'Admin password to publish this file for everyone who opens this link.\nLeave blank to use it only in this browser.')||'';
+  if(API&&!pw)return alert('A password is required to publish. Nothing was changed.');
   if(pw){let r=null;try{r=await fetch('/api/upload',{method:'POST',headers:{'content-type':'application/json','x-admin-password':pw},body:JSON.stringify({v:1,asof:na,name:f.name,rows})})}catch(x){}
-   if(r&&r.ok){const j=await r.json();ALL=rows;ASOF=na;SRC={name:f.name,at:j.at||Date.now(),server:true};try{sessionStorage.setItem('attr_pw',pw);localStorage.removeItem(SK)}catch(x){}init();return alert('Published. Everyone who opens this link will now see this file.')}
+   if(r&&r.ok){const j=await r.json();ALL=rows;ASOF=na;API=true;SRC={name:f.name,at:j.at||Date.now(),server:true,ver:j.ver||''};try{sessionStorage.setItem('attr_pw',pw);localStorage.removeItem(SK)}catch(x){}init();return alert('Published. Everyone who opens this link will now see this file.')}
    if(r&&r.status==401){try{sessionStorage.removeItem('attr_pw')}catch(x){}return alert('Wrong password. Nothing was changed.')}
-   if(r&&r.status!=404){let m='';try{m=(await r.json()).error}catch(x){}return alert('Could not publish: '+(m||('server error '+r.status))+'\nNothing was changed.')}}
-  ALL=rows;ASOF=na;SRC={name:f.name,at:Date.now()};const ok=stSave({v:1,asof:na,name:f.name,at:SRC.at,rows});init();alert(ok?'Loaded. No shared server was reached, so this file is saved only in this browser.':'Loaded for this session only (this browser could not save it).')
+   if(API||(r&&r.status!=404)){let m='';try{m=(await r.json()).error}catch(x){}return alert('Could not publish for everyone: '+(m||(r?'server error '+r.status:'no connection to the server'))+'\nNothing was changed.')}}
+  ALL=rows;ASOF=na;SRC={name:f.name,at:Date.now()};const ok=stSave({v:1,asof:na,name:f.name,at:SRC.at,rows});init();alert((ok?'Loaded for this browser only. ':'Loaded for this session only. ')+'Sharing with other people works only on the Vercel website, not here.')
  }catch(x){ASOF=oldA;alert('Could not read that file: '+x.message)}};
 async function boot(){$('#body').innerHTML='<div class="cd"><h3>Loading the latest data...</h3></div>';let sv=null;
- try{const c=new AbortController(),tm=setTimeout(()=>c.abort(),6000),r=await fetch('/api/data',{cache:'no-store',signal:c.signal});clearTimeout(tm);if(r.ok){const j=await r.json();if(j&&j.v==1&&j.rows&&j.rows.length)sv={...j,server:true}}}catch(e){}
- if(!sv)sv=stLoad();
- if(sv){ALL=sv.rows;ASOF=sv.asof;SRC={name:sv.name,at:sv.at,server:!!sv.server}}else{ASOF=Math.round(Date.parse(DATA.asof)/D);ALL=build([DATA.T])}
+ try{const c=new AbortController(),tm=setTimeout(()=>c.abort(),6000),r=await fetch('/api/data',{cache:'no-store',signal:c.signal});clearTimeout(tm);let j=null;try{j=await r.json()}catch(e){}
+  if(r.ok&&j&&j.v==1&&j.rows&&j.rows.length){API=true;sv={...j,server:true,ver:r.headers.get('x-data-version')||''}}
+  else if(j&&typeof j.error=='string'){API=true;APIM=r.status==404?'No shared file uploaded yet \u2013 everyone currently sees the built-in data.':'\u26a0 Shared storage is not working ('+j.error+'). Uploads will not reach other people until this is fixed \u2013 see README.'}}catch(e){}
+ if(!sv&&!API)sv=stLoad();
+ if(sv){ALL=sv.rows;ASOF=sv.asof;SRC={name:sv.name,at:sv.at,server:!!sv.server,ver:sv.ver||''}}else{ASOF=Math.round(Date.parse(DATA.asof)/D);ALL=build([DATA.T])}
  init()}
+async function chk(){if(!API)return;try{const r=await fetch('/api/data?meta=1',{cache:'no-store'});if(!r.ok)return;const j=await r.json();if(j&&j.ver&&(!SRC||!SRC.server||SRC.ver!==j.ver))location.reload()}catch(e){}}
+setInterval(chk,90000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
 $('#rst').onclick=()=>{try{localStorage.removeItem(SK)}catch(e){}SRC=null;ASOF=Math.round(Date.parse(DATA.asof)/D);ALL=build([DATA.T]);init()};
 boot();
 </script></body></html>

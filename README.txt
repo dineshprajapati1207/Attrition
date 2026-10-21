@@ -23,13 +23,24 @@ STEP 3 - Turn on shared storage (one time, 2 minutes)
      Tick Production / Preview / Development > Save.
   3. Go to Deployments > the latest one > "..." > Redeploy.
 
-HOW TO UPDATE THE DATA
+HOW TO UPDATE THE DATA (shows to EVERYONE)
   1. Open your Vercel link. Click "Refresh with updated Excel" and choose the new file.
-  2. Enter the ADMIN_PASSWORD when asked. Done.
+  2. Enter the ADMIN_PASSWORD when asked. A message says "Published".
   Everyone who opens the link (now or later) sees that same file's data, and it stays
-  until you upload another file. Until your first upload, everyone sees the built-in data.
-  Wrong password = nothing changes. Leaving the password blank keeps the file only in
-  your own browser (nobody else sees it).
+  until you upload another file. People who already have the page open get the new data
+  automatically within about 90 seconds (or as soon as they switch back to the tab).
+  Until your first upload, everyone sees the built-in data.
+  On the Vercel site a password is always required, so a file can never end up visible
+  only to you. Wrong password = nothing changes.
+
+IF PEOPLE DO NOT SEE YOUR NEW FILE
+  Look at the line next to the "Refresh with updated Excel" button:
+   - "Shared with everyone - data file: <name> - uploaded <time>"  = working.
+   - "Shared storage is not working ..." = Step 3 above is not finished (Blob store not
+     connected, or you did not Redeploy after adding it / ADMIN_PASSWORD).
+   - Nothing shown and the message "Loaded for this browser only" appears after upload =
+     you are on a copy that is not the Vercel site (for example the claude.ai link).
+     Sharing only works on the Vercel website.
 
 NOTES
   - The Excel needs a "Date Of Joining" column. Anyone with a Last Working Date on or
