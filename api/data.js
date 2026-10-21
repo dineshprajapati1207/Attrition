@@ -6,6 +6,9 @@ module.exports = async (req, res) => {
     const { blobs } = await list({ prefix: 'attrition/' });
     if (!blobs.length) return res.status(404).json({ error: 'No file has been uploaded yet' });
     const latest = blobs.sort((a, b) => new Date(b.uploadedAt) - new Date(a.uploadedAt))[0];
+    const ver = new Date(latest.uploadedAt).toISOString();
+    if (req.query && req.query.meta) return res.status(200).json({ ver }); // tiny "has anything changed?" check
+    res.setHeader('x-data-version', ver);
     const r = await fetch(latest.url, { cache: 'no-store' });
     if (!r.ok) return res.status(502).json({ error: 'Could not read the stored file' });
     res.setHeader('Content-Type', 'application/json');

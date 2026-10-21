@@ -29,7 +29,9 @@ module.exports = async (req, res) => {
     const { blobs } = await list({ prefix: 'attrition/' });
     const old = blobs.filter(x => x.url !== saved.url).map(x => x.url);
     if (old.length) await del(old); // keep only the newest upload
-    return res.status(200).json({ ok: true, name: data.name, at: data.at });
+    const me = blobs.find(x => x.url === saved.url);
+    const ver = new Date(me ? me.uploadedAt : Date.now()).toISOString();
+    return res.status(200).json({ ok: true, name: data.name, at: data.at, ver });
   } catch (e) {
     return res.status(500).json({ error: 'Storage error: ' + (e && e.message ? e.message : e) + ' (is a Blob store connected to this project?)' });
   }
