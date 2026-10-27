@@ -1,0 +1,9 @@
+{
+  "name": "attrition-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Attrition dashboard with shared data storage on Vercel Blob",
+  "dependencies": {
+    "@vercel/blob": "latest"
+  }
+}
