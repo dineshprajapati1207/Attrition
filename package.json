@@ -1,9 +1,13 @@
 {
-  "name": "attrition-dashboard",
+  "name": "attrition-ta-dashboard",
   "version": "1.0.0",
   "private": true,
-  "description": "Attrition dashboard with shared data storage on Vercel Blob",
-  "dependencies": {
-    "@vercel/blob": "latest"
+  "description": "Live Attrition + TA Funnel dashboard backed by Google Sheets (service account)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
