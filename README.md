@@ -79,8 +79,22 @@ Only the two configured sheets can be read through the API.
 - The service account only needs **Viewer** access to the two sheets.
 - If a key is ever exposed, delete it in Google Cloud (IAM → Service accounts → Keys) and create a new one.
 
-## Latest dashboard changes
-- **Regrettable vs non-regrettable** (Overview): donut plus a table of exits by category and reason for leaving, with the number, % of total exits and % within the category. It follows the selected month / period and every number opens the employee list. Excel button included.
-- **Top reasons for leaving**: shows the total number of exits for the period and, on each bar, the count and its % of total exits (smaller reasons are grouped as "Other reasons").
-- **Headings**: every report title is a coloured heading row with a bullet, and table header rows have a tinted background with bullets.
-- Data loading, the Google service-account server and the automatic refresh are unchanged.
+## Deploying on Vercel (GitHub -> Vercel)
+Vercel does not run `server.js` (it is a long-running Node server). On Vercel the same API is served by the functions in `api/`
+(`/api/sheet/attrition`, `/api/sheet/ta`, `/api/health`), which share the code in `lib/sheets.js`. `server.js` still works for
+running the dashboard on your own computer or any normal Node host (`npm start`).
+
+1. Upload this folder to GitHub (the key `.json` files must NOT be in it).
+2. Vercel > Add New > Project > import the repository > Framework Preset **Other** > Deploy.
+3. Vercel > Settings > Environment Variables > add `GOOGLE_SERVICE_ACCOUNT_JSON` = the whole content of the service-account key file
+   (Production + Preview). Optional: `ATTRITION_SHEET_ID`, `TA_SHEET_ID`, `CACHE_SECONDS`. Then **Redeploy**.
+4. Both Google Sheets must be shared with the service account's `client_email` as **Viewer**.
+5. Open `https://<your-project>.vercel.app/api/health` - it must show `"ok": true`. Then open the dashboard; it refreshes every 30 s.
+
+If the dashboard says "Could not load the attrition sheet": a 404 means the `api/` folder was not deployed; a message from Google
+(sign-in / no access) is shown in full - follow it (new key, or share the sheet with the service account).
+
+## Change log
+- Overview: the "Top reasons for leaving" report (chart + table) and its Excel export were removed. The "Reason for leaving"
+  table on the Exit Reasons tab and the Regrettable vs non-regrettable report are unchanged.
+
